@@ -1,15 +1,3 @@
-setwd("D:/andres/Macc/AED/Proyecto")
-
-library(readr)
-terremoto <- read_csv("Dataset_clean.csv", 
-                      col_types = cols(Year = col_integer()))
-cuantis = c('Year','Depth','Latitude','Longitude','Mag', 'NST')
-
-View(terremoto)
-summary(terremoto)
-
-#--------------Graficos de las variables -------------------------# 
-
 # librerias
 library(tidyverse)
 library(GGally)
@@ -19,6 +7,18 @@ library(dplyr)
 library(ggplot2)
 library(maps)
 library(MVN)
+library(readr)
+
+#---------------------Importación de la base de datos------------------
+terremoto <- read_csv("Dataset_clean.csv", 
+                      col_types = cols(Year = col_integer()))
+cuantis = c('Year','Depth','Latitude','Longitude','Mag', 'NST')
+
+View(terremoto)
+summary(terremoto)
+
+
+#--------------Graficos de las variables -------------------------# 
 # histogramas
 #------------------------------------------------------------------------------------------
 h1=ggplot(terremoto,aes(x=Year))+geom_histogram(color="red");h1
@@ -245,7 +245,127 @@ mosaic(~ Continent + MagType, data = terremoto,
        main = "Diagrama de Mosaico entre Continente y Tipo de Magnitud",
        shade = TRUE, legend = TRUE)
 
+#----------------------------------------------------------------------
+
+#########################################################
+##                    PCA MODEL                        ##
+#########################################################
+
+library(readr)
+terremoto <- read_csv("Dataset_clean.csv", 
+                      col_types = cols(Year = col_integer()))
 
 
+numeric_data <- terremoto[, c("Longitude", "Latitude", "Depth", "Mag", "NST")]
+cor_numeric <- cor(numeric_data)
+cor_matrix <- melt(cor_numeric)
 
 
+# Métricas de calidad
+KMO(cor_numeric)  # 0.42
+cortest.bartlett(cor_numeric, n=3152) # p-value = 0
+
+
+#---------------------------------------------------------------------
+# Heap map de correlaciones
+# Crear el heatmap con números
+ggplot(cor_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +  # Dibujar los cuadros del heatmap
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                       midpoint = 0, limit = c(-1, 1), space = "Lab",
+                       name = "Correlación") +
+  geom_text(aes(label = round(value, 2)), color = "black", size = 4) +  # Agregar números
+  theme_minimal() +  # Tema limpio
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +  # Rotar etiquetas
+  labs(title = "Mapa de Calor de Correlaciones", x = "", y = "") +
+  coord_fixed()  # Asegurar proporciones iguales
+
+#---------------------------------------------------------------------
+# PCA #
+
+terremoto.pca <- PCA(numeric_data, scale.unit = TRUE, graph = FALSE)
+
+# Cargas de las componentes principales
+terremoto.pca$var$coord
+
+
+var_exp <- terremoto.pca$eig[,2]/100
+# Crear un data frame para el gráfico
+df_var_exp <- data.frame(
+  Componente = 1:length(var_exp),
+  Varianza_Explicada = var_exp
+)
+
+# Generar gráfico de la varianza en un heapMap
+ggplot(df_var_exp, aes(x = Componente, y = Varianza_Explicada)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_text(aes(label = round(Varianza_Explicada, 2)), vjust = -0.5) +
+  labs(
+    title = "Varianza Explicada por Componente Principal",
+    x = "Componente Principal",
+    y = "Varianza Explicada"
+  ) +
+  theme_minimal()
+
+#-----------------------------------------------
+# Realizar análisis PCA
+data.pca <- PCA(numeric_data, scale.unit = TRUE, graph = FALSE)
+
+# Crear biplot (variables y observaciones)
+fviz_pca_var(data.pca, 
+             col.var = "contrib", # Color según la contribución de las variables
+             gradient.cols = c("blue", "purple", "red"),
+             repel = TRUE) +      # Evitar superposición de etiquetas
+  ggtitle("Scatter plot Componentes principales") +
+  theme_minimal()
+
+
+#----------------------------------------------------------------
+# Gráfico 3D para tomar 3 Dimensiones
+var_coords <- as.data.frame(data.pca$var$coord)
+
+fig <- plot_ly(
+  x = var_coords$Dim.1, 
+  y = var_coords$Dim.2, 
+  z = var_coords$Dim.3,
+  text = rownames(var_coords), # Nombres de las variables
+  type = "scatter3d", 
+  mode = "markers+text",
+  marker = list(size = 5, color = "red"),
+  textposition = "top center"
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "PC1"),
+      yaxis = list(title = "PC2"),
+      zaxis = list(title = "PC3")
+    ),
+    title = "PCA 3D - Variables"
+  )
+fig # Mostrar el gráfico
+
+
+#----------------------------------------------------------------
+# Realizar PCA
+
+pca <- prcomp(numeric_data, center = TRUE, scale. = TRUE)
+pca_data <- as.data.frame(pca$x)  # Componentes principales
+pca$rotation
+
+# Agregar la columna de Continentes al resultado del PCA
+pca_data$Continent <- terremoto$Continent
+
+# Crear el gráfico
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Continent)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  labs(
+    title = "Scatter Plot por Continente",
+    x = "PC1",
+    y = "PC2",
+    color = "Continente"
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")  # Paleta similar a Set1 de seaborn
+#---------------------------------------------------------------------------
