@@ -1,8 +1,11 @@
-setwd("D:/andres/Macc/AED/Proyecto")
+#############################################################################
+# Este script de R limpia la base de datos, se encarga de eliminar los NA's #
+#############################################################################
+# librerias
+library(readr)
+library(dplyr)
 
 # Importamos la base de datos
-
-library(readr)
 datos<- read_csv("Significant Earthquake Dataset 1900-2023.csv")
 
 ###############################################################################
@@ -38,8 +41,7 @@ datos$Region <- ifelse(grepl("region$", datos$Region),
                        gsub(" region$", "", datos$Region),
                        datos$Region)
 
-library(dplyr)
-
+# Continentamos
 datos <- datos %>%
   mutate(Continent = case_when(
     Region %in% c("Chile", "Argentina", "Peru", "Ecuador", "Easter Island") ~ "South America",
@@ -71,14 +73,15 @@ View(terremotos_cleaned)
 
 # Guardar el nuevo archivo CSV
 write.csv(terremotos_cleaned, "terremotos_cleaned.csv", row.names = FALSE)
-###########################################################################
 
-# Cargar librerías necesarias
-library(dplyr)
+#---------------------------------------------------------------------------------------#
+
+#########################################################################################
+# Luego de guardar terremotos_cleaned.csv, lo importamos de nuevo para seguir limpiando #
+#########################################################################################
 
 # Cargar la base de datos de terremotos
 terremotos_cleaned <- read_csv("terremotos_cleaned.csv")
-
 
 # Mapeo de continentes para las regiones conocidas
 region_to_continent <- c(
@@ -145,14 +148,18 @@ terremotos_cleaned <-terremotos_cleaned %>%
 
 
 View(terremotos_cleaned)
-# Guardar la nueva base de datos con los cambios
-write.csv(l, "base_completa.csv", row.names = FALSE)
+# Guardar la nueva base de datos con los cambios, y esta es la definitiva
+write.csv(l, "Dataset_clean.csv", row.names = FALSE)
 
 
-library(readr)
+
+###############################
+# Test para saber si hay NA's #
+###############################
+
 base_limpia <- read_csv("base_limpia.csv")
 View(base_limpia)
 
 l <- base_limpia %>%
-  filter(!is.na(Depth) & !is.na(NST)) # Ajuste según lo que consideres un nombre inválido
-summary(l)
+  filter(!is.na(Depth) & !is.na(NST))
+summary(l) # 0
