@@ -14,7 +14,7 @@ Entre los análisis realizados se incluyen:
 
 ## 📂 Estructura del Repositorio
 
-- 📄 **`Significant_Earthquake.pdf`**: Informe completo en formato PDF, que incluye la metodología, análisis y conclusiones.
+- 📄 **`Informe - Earthquake 1900-2023.pdf`**: Informe completo en formato PDF, que incluye la metodología, análisis y conclusiones.
 - 🖼️ **`Póster - Earthquake 1900-2023.pdf`**: Informe completo en formato PDF, que incluye la metodología, análisis y conclusiones.
 - 📓 **`Significant_Earthquake.ipynb`**: Notebook en Python donde se desarrolla el análisis de los datos, con gráficos y estadísticas explicadas paso a paso.
 - 💻 **`ScriptProyect.R`**: Script del proyecto en R, aquí encontrarás todo el análisis desde R.
